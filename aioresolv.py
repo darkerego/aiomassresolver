@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # encoding: utf-8
 # AioMassResolver ~ uvloop & aiodns - resolve bulk dns queries extremely quickly
 # xelectron@protonmail.com
