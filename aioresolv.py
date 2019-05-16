@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 # AioMassResolver ~ uvloop & aiodns - resolve bulk dns queries extremely quickly
+# xelectron@protonmail.com
 
 """
 @author: darkerego
