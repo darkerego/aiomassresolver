@@ -54,7 +54,7 @@ Resolve 10001 MX records in two seconds:
 
 Same thing but get A records:
 
-    ./aioresolver.py -l random_domains.list -q 'A' -w 10000
+    $ ./aioresolver.py -l random_domains.list -q 'A' -w 10000
     ----- trunicated -----
     {'domain': 'ironsolutions.com', 'type': 'A', 'data': ['192.238.15.32']}
     {'domain': 'aze.bz', 'type': 'A', 'data': ['202.172.26.48']}
