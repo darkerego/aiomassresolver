@@ -23,6 +23,8 @@ optional arguments:
                         DNS Query type to perform. Valid qtypes are:A, AAAA,
                         CNAME, NS, MX, SOA, TXT, and PTR
 
+</pre>
+
 
 ## Testing:
 
