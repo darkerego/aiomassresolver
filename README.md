@@ -4,25 +4,27 @@ Uvloop &amp; aiodns ultra fast dns record resolver
 Noticed there was not a use of aiodns out there, so I give you `aioMassResolver` - powered by uvloop, and capable of getting tens of thousands of DNS records in seconds:
 
 <pre>
-
-usage: aioMassResolver.py [-h] [--demo] [-o OUTPUT] [-i] [-w NUM_WORKERS]
-                       [-l LIST_FILE] [-d SINGLE_QUERY] [-q QTYPE]
+$ ./aiomassresolver.py -h
+usage: Uvloop & AIODns Powered Resolver. Resolve thousands of domains in seconds.
+example usage: $ python3 ./aioresolver.py --list domains.list --qtype 'A' 
+       [-h] [-o OUTPUT] [-w NUM_WORKERS] [-l LIST_FILE] [-d SINGLE_QUERY]
+       [-q {A,AAAA,CNAME,NS,MX,SOA,TXT,PTR}] [-W WILDCARD]
 
 optional arguments:
   -h, --help            show this help message and exit
-  --demo                Demo mode. Show me what you got.
   -o OUTPUT, --out OUTPUT
-  -i, --json
   -w NUM_WORKERS, --workers NUM_WORKERS
-                        Number of async workers
+                        Number of async workers to use.Increase this for
+                        longer lists. Default: 1000
   -l LIST_FILE, --list LIST_FILE
-                        list of ips/domains to resolve
+                        List of ips/domains to resolve.
   -d SINGLE_QUERY, --domain SINGLE_QUERY
-                        Resolve a single domain/ip.
-  -q QTYPE, --qtype QTYPE
-                        DNS Query type to perform. Valid qtypes are:A, AAAA,
-                        CNAME, NS, MX, SOA, TXT, and PTR
-
+                        Resolve a single domain.
+  -q {A,AAAA,CNAME,NS,MX,SOA,TXT,PTR}, --qtype {A,AAAA,CNAME,NS,MX,SOA,TXT,PTR}
+                        DNS Query type to perform.
+  -W WILDCARD, --wildcard_A WILDCARD
+                        Run a wildcard_A query against a single domain.
+                        Example: ./aiomassresolver.py -W taobao.com
 </pre>
 
 
@@ -87,3 +89,4 @@ As you can see, using aiodns with uvloop, we can resolve tons of domains extreem
     $ ./aioresolver.py -l random_domains.list -q 'A' -w 10000
     
     
+Program also has a function for resolving wildcard A records (--wildcard). TODO: Implement functionality so that it can be run from a list instead of just individual records.

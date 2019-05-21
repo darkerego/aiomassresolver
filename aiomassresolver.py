@@ -19,11 +19,11 @@ init(autoreset=True)
 
 
 class AsyncResolver(object):
-    # results: Dict[Any, Any]
 
-    def __init__(self, num_workers=5, nameservers=['8.8.8.8', '8.8.4.4'], loop=None, qtype="A", debug=False):
+    def __init__(self, num_workers=5, nameservers=None, loop=None, qtype="A", debug=False):
+        if nameservers is None:
+            nameservers = ['8.8.8.8', '8.8.4.4']
         self.timeout = 0.1
-        # self.loop = asyncio.get_event_loop()
         self.loop = uvloop.new_event_loop()  # use uvloop
         asyncio.set_event_loop(self.loop)
         self.resolver = aiodns.DNSResolver(timeout=self.timeout, loop=self.loop)
@@ -48,9 +48,7 @@ class AsyncResolver(object):
         except:
             return Fore.RED + '[!] Found no wildcard dns records.'
 
-
     async def query(self, domain, qtype):
-
         return await self.resolver.query(domain, qtype)
 
     def task_query(self, domains, output):
@@ -68,6 +66,12 @@ class AsyncResolver(object):
         return self.results
 
     async def do_work(self, work_queue, output):
+        """
+
+        :param work_queue: tasks to complete
+        :param output: output file
+        :return: -
+        """
 
         def writer(_data):
             """
@@ -79,7 +83,6 @@ class AsyncResolver(object):
                 ff.write(str(_data) + "\n")
 
         resolver = aiodns.DNSResolver(loop=self.loop, nameservers=self.nameservers, timeout=2, tries=1)
-        # resolver = aiodns.DNSResolver(loop=loop)
         while not work_queue.empty():
             domain: object = await work_queue.get()
             qtype = self.qtype
@@ -123,16 +126,13 @@ class AsyncResolver(object):
                     data = list(map(lambda x: x.host, res))
                     item = {"domain": domain, "type": "AAAA", "data": data}
                 elif qtype == 'CNAME':
-
                     data = res.cname
                     item = {"domain": domain, "type": "CNAME", "data": data}
                 elif qtype == 'MX':
-
                     data = list(map(lambda x: x.host, res))
                     item = {"domain": domain, "type": "MX", "data": data}
                     print(item)
                 elif qtype == 'NS':
-
                     data = list(map(lambda x: x.host, res))
                     item = {"domain": domain, "type": "NS", "data": data}
                 elif qtype == 'SOA':
@@ -151,7 +151,6 @@ class AsyncResolver(object):
                     data = res.name
                     item = {"domain": data, "type": "PTR", "data": [domain]}
                 else:
-                    # self.results[domain] = res
                     raise ValueError('Invalid query type.')
             finally:
                 if item is not None:
@@ -162,9 +161,9 @@ class AsyncResolver(object):
 
 class Resolver:
     """
-    Wrapper class for swarm resolver
+    Wrapper class for async resolver
     """
-    def __init__(self, domains, qtype, output, json_output, num_workers=100):
+    def __init__(self, domains, qtype, output, num_workers=100):
         """
 
         :param domains: list of ips to query
@@ -180,12 +179,11 @@ class Resolver:
         self.qtype = qtype
         self.output = output
         self.swarm = AsyncResolver(qtype=qtype, num_workers=num_workers, loop=self.loop)
-        self.json_output = json_output
 
     def tearDown(self):
         self.swarm = None
 
-    def test_domain_list_resolve_ns(self):
+    def resolve(self):
         self.swarm.task_query(self.domains, self.output)
 
 
@@ -204,14 +202,12 @@ def get_args():
     parser = argparse.ArgumentParser(usage)
 
     parser.add_argument('-o', "--out", dest='output', type=str, default='aioresolver.log')
-    # parser.add_argument('-i', '--json', dest='json_output', action='store_true')
     parser.add_argument('-w', '--workers', dest='num_workers', type=int, help='Number of async workers to use.'
                                                                               'Increase this for longer lists. '
                                                                               'Default: 1000', default=1000)
-    parser.add_argument('-l', '--list', dest='list_file', type=str, help='list of ips/domains to resolves')
+    parser.add_argument('-l', '--list', dest='list_file', type=str, help='List of ips/domains to resolve.')
     parser.add_argument('-d', '--domain', dest='single_query', type=str, help='Resolve a single domain.')
-    parser.add_argument('-q', '--qtype', dest='qtype', help='DNS Query type to perform. Valid qtypes are:'
-                                              'A, AAAA, CNAME, NS, MX, SOA, TXT, PTR', type=str, default='A',
+    parser.add_argument('-q', '--qtype', dest='qtype', help='DNS Query type to perform.', type=str, default='A',
                         choices=['A', 'AAAA', 'CNAME', 'NS', 'MX', 'SOA', 'TXT', 'PTR'])
     parser.add_argument("-W", "--wildcard_A", dest='wildcard', type=str, default=False,
                         help='Run a wildcard_A query against a single domain. Example: '
@@ -219,24 +215,23 @@ def get_args():
     args = parser.parse_args()
     return args
 
+
 def main():
-    debug = False
     args = get_args()
 
-    def run(domains_ips, qtype, _output, _json_output, _limit):
+    def run(domains_ips, qtype, _output, _limit):
         _json_output = False
-        resolve = Resolver(domains_ips, qtype, _output, _json_output, _limit)
-        resolve.test_domain_list_resolve_ns()
-    if args.output:
-        output = args.output
+        resolve = Resolver(domains_ips, qtype, _output, _limit)
+        resolve.resolve()
+        resolve.tearDown()
+
+    output = args.output
     if args.wildcard:
         domain = args.wildcard
         resolver = AsyncResolver()
         print(resolver.wildcard_A(domain))
     else:
         limit = args.num_workers
-        # output = args.output
-        json_output = True  # TODO: remove this redundant argument
         _qtype = args.qtype
         if args.list_file:
             list_file = args.list_file
@@ -246,7 +241,7 @@ def main():
             for i in queries:
                 _queries.append(i)
             t = process_time()
-            run(_queries, _qtype, output, json_output, limit)
+            run(_queries, _qtype, output, limit)
             elapsed_time = process_time() - t
             print(Fore.YELLOW + "--------------------------------------------------------------------------")
             print("Finished! Process time: " + str(elapsed_time))
@@ -256,7 +251,7 @@ def main():
             _domain = []
             if args.single_query:
                 _domain.append(args.single_query)
-                run(_domain, _qtype, output, json_output, limit)
+                run(_domain, _qtype, output, limit)
             else:
                 print(Fore.RED + '[Error]: Specify either a list or  a query! Run --help for usage.')
                 exit(1)
@@ -265,6 +260,7 @@ def main():
 if __name__ == "__main__":
 
     try:
-      main()
+        main()
     except KeyboardInterrupt:
+        print("\nCaught Signal, exiting cleanly ...\n")
         exit(1)
