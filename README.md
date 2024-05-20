@@ -89,4 +89,4 @@ As you can see, using aiodns with uvloop, we can resolve tons of domains extreem
     $ ./aioresolver.py -l random_domains.list -q 'A' -w 10000
     
     
-Program also has a function for resolving wildcard A records (--wildcard). TODO: Implement functionality so that it can be run from a list instead of just individual records.
+Program also has a function for resolving wildcard A records
